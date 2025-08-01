@@ -2,21 +2,22 @@
 
 import { useState, useRef, useEffect } from 'react';
 
+
 export default function Home() {
-  const [currentFile, setCurrentFile] = useState(null);
+  const [currentRecipe, setCurrentRecipe] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   const fileInputRef = useRef(null);
-  const maxFileSize = 50 * 1024 * 1024; // 50MB
+  const maxFileSize = 10 * 1024 * 1024; // 10MB for recipe images
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      processFile(file);
+      processRecipeImage(file);
     }
   };
 
@@ -34,7 +35,7 @@ export default function Home() {
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
-      processFile(file);
+      processRecipeImage(file);
     }
   };
 
@@ -46,9 +47,16 @@ export default function Home() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const processFile = (file) => {
+  const processRecipeImage = (file) => {
     if (file.size > maxFileSize) {
-      setErrorMessage(`File too large. Maximum size is ${formatFileSize(maxFileSize)}`);
+      setErrorMessage(`Image too large. Maximum size is ${formatFileSize(maxFileSize)}`);
+      setShowError(true);
+      setTimeout(() => setShowError(false), 5000);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Please select an image file (JPG, PNG, GIF)');
       setShowError(true);
       setTimeout(() => setShowError(false), 5000);
       return;
@@ -67,24 +75,13 @@ export default function Home() {
       });
     }, 100);
 
-    setCurrentFile(file);
+    setCurrentRecipe(file);
   };
 
-  const downloadFile = () => {
-    if (currentFile) {
-      const url = URL.createObjectURL(currentFile);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = currentFile.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
 
-  const clearFile = () => {
-    setCurrentFile(null);
+
+  const clearRecipe = () => {
+    setCurrentRecipe(null);
     setUploadProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -92,61 +89,34 @@ export default function Home() {
   };
 
   const getFileIcon = (file) => {
-    if (!file) return '📄';
-    
+    if (!file) return '🍽️';
+
     const type = file.type;
-    if (type.startsWith('image/')) return '🖼️';
-    if (type.startsWith('video/')) return '🎥';
-    if (type.startsWith('audio/')) return '🎵';
-    if (type.includes('pdf')) return '📕';
-    if (type.includes('word') || type.includes('document')) return '📝';
-    if (type.includes('excel') || type.includes('spreadsheet')) return '📊';
-    if (type.includes('powerpoint') || type.includes('presentation')) return '📈';
-    if (type.includes('text') || type.includes('code')) return '📄';
-    if (type.includes('zip') || type.includes('archive')) return '📦';
-    return '📄';
+    if (type.startsWith('image/')) return '📸';
+    return '🍽️';
   };
 
-  const renderFilePreview = () => {
-    if (!currentFile) return null;
+  const renderRecipePreview = () => {
+    if (!currentRecipe) return null;
 
-    const fileType = currentFile.type;
-    
+    const fileType = currentRecipe.type;
+
     if (fileType.startsWith('image/')) {
       return (
-        <img 
-          src={URL.createObjectURL(currentFile)} 
-          alt={currentFile.name}
+        <img
+          src={URL.createObjectURL(currentRecipe)}
+          alt="Recipe preview"
           style={{ maxWidth: '100%', borderRadius: '12px' }}
         />
       );
     }
-    
-    if (fileType.startsWith('text/') || fileType.includes('code')) {
-      return (
-        <pre style={{
-          background: 'rgba(0, 0, 0, 0.3)',
-          padding: '1.5rem',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          whiteSpace: 'pre-wrap',
-          wordWrap: 'break-word',
-          color: '#e2e8f0',
-          lineHeight: 1.6,
-          fontFamily: 'JetBrains Mono, Fira Code, monospace'
-        }}>
-          {currentFile.name} - {formatFileSize(currentFile.size)}
-        </pre>
-      );
-    }
-    
+
     return (
       <div style={{ textAlign: 'center', padding: '3rem', color: '#b8c6db' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📄</div>
-        <p>Preview not available for this file type</p>
-        <p>File: {currentFile.name}</p>
-        <p>Size: {formatFileSize(currentFile.size)}</p>
-        <p>Type: {currentFile.type || 'Unknown'}</p>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🍽️</div>
+        <p>Recipe image preview</p>
+        <p>File: {currentRecipe.name}</p>
+        <p>Size: {formatFileSize(currentRecipe.size)}</p>
       </div>
     );
   };
@@ -164,10 +134,10 @@ export default function Home() {
     <>
       <style jsx global>{`
         :root {
-          --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          --dark-bg: #0a0e27;
+          --primary-gradient: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+          --secondary-gradient: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+          --accent-gradient: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);
+          --dark-bg: #2c3e50;
           --card-bg: rgba(255, 255, 255, 0.05);
           --border-color: rgba(255, 255, 255, 0.1);
           --text-primary: #ffffff;
@@ -200,9 +170,9 @@ export default function Home() {
           width: 100%;
           height: 100%;
           background: 
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(254, 202, 87, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(72, 219, 251, 0.2) 0%, transparent 50%);
           z-index: -1;
           animation: bgShift 20s ease-in-out infinite;
         }
@@ -223,7 +193,7 @@ export default function Home() {
           top: 0;
           left: 0;
           right: 0;
-          background: rgba(10, 14, 39, 0.9);
+          background: rgba(44, 62, 80, 0.9);
           backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border-color);
           z-index: 1000;
@@ -315,7 +285,7 @@ export default function Home() {
           font-size: clamp(3rem, 8vw, 5.5rem);
           font-weight: 900;
           margin-bottom: 1.5rem;
-          background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #764ba2 100%);
+          background: linear-gradient(135deg, #ffffff 0%, #ff6b6b 50%, #feca57 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -352,7 +322,7 @@ export default function Home() {
 
         .cta-button:hover {
           transform: translateY(-3px);
-          box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 20px 40px rgba(255, 107, 107, 0.4);
         }
 
         @keyframes slideInUp {
@@ -431,6 +401,8 @@ export default function Home() {
           to { transform: scaleX(1); }
         }
 
+
+
         .upload-zone {
           border: 2px dashed var(--border-color);
           border-radius: 16px;
@@ -441,19 +413,20 @@ export default function Home() {
           position: relative;
           cursor: pointer;
           overflow: hidden;
+          margin-bottom: 2rem;
         }
 
         .upload-zone.dragover {
-          border-color: #4facfe;
-          background: rgba(79, 172, 254, 0.1);
+          border-color: #ff6b6b;
+          background: rgba(255, 107, 107, 0.1);
           transform: scale(1.02);
         }
 
         .upload-zone:hover {
-          border-color: #667eea;
-          background: rgba(102, 126, 234, 0.05);
+          border-color: #ff6b6b;
+          background: rgba(255, 107, 107, 0.05);
           transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+          box-shadow: 0 20px 40px rgba(255, 107, 107, 0.2);
         }
 
         .upload-icon {
@@ -526,8 +499,10 @@ export default function Home() {
 
         .upload-btn:hover {
           transform: translateY(-2px);
-          box-shadow: 0 15px 30px rgba(240, 147, 251, 0.4);
+          box-shadow: 0 15px 30px rgba(72, 219, 251, 0.4);
         }
+
+
 
         .file-preview {
           margin-top: 3rem;
@@ -612,7 +587,7 @@ export default function Home() {
 
         .action-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 15px rgba(255, 107, 107, 0.3);
         }
 
         .file-content {
@@ -711,8 +686,8 @@ export default function Home() {
 
         .feature-card:hover {
           transform: translateY(-8px);
-          border-color: rgba(102, 126, 234, 0.3);
-          box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
+          border-color: rgba(255, 107, 107, 0.3);
+          box-shadow: 0 25px 50px rgba(255, 107, 107, 0.2);
         }
 
         .feature-icon {
@@ -779,6 +754,8 @@ export default function Home() {
             padding: 2rem 1rem;
           }
           
+
+          
           .upload-zone {
             padding: 3rem 1rem;
           }
@@ -813,9 +790,10 @@ export default function Home() {
 
       <header>
         <div className="header-content">
-          <div className="logo">FileVault Pro</div>
+          <div className="logo">RecipeHub</div>
           <nav className="nav">
-            <a onClick={smoothScroll} href="#upload">Upload</a>
+            <a onClick={() => window.location.href = '/my-recipies'}>Browse Recipes</a>
+            <a onClick={() => window.location.href = '/my-recipies-submision'}>Submit Recipe</a>
             <a onClick={smoothScroll} href="#features">Features</a>
             <a onClick={smoothScroll} href="#about">About</a>
             <a onClick={smoothScroll} href="#contact">Contact</a>
@@ -827,12 +805,22 @@ export default function Home() {
         <section className="hero">
           <div className="container">
             <div className="hero-content">
-              <h1>Advanced File Management</h1>
-              <p>Experience the next generation of file handling with our professional-grade platform. Upload, preview, and manage any file type with enterprise-level security and lightning-fast performance.</p>
-              <button className="cta-button" onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
-                <span>Get Started</span>
-                <span>→</span>
-              </button>
+              <h1>Share Your Culinary Creations</h1>
+              <p>Join our community of food enthusiasts! Submit your favorite recipes, discover new dishes, and connect with fellow cooking lovers. Your next masterpiece is just a click away.</p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button className="cta-button" onClick={() => window.location.href = '/my-recipies'}>
+                  <span>Browse Recipes</span>
+                  <span>→</span>
+                </button>
+                <button
+                  className="cta-button"
+                  style={{ background: 'var(--secondary-gradient)' }}
+                  onClick={() => window.location.href = '/my-recipies-submision'}
+                >
+                  <span>Submit Recipe</span>
+                  <span>→</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -840,71 +828,19 @@ export default function Home() {
         <section className="upload-section" id="upload">
           <div className="container">
             <div className="section-header">
-              <h2>Upload & Preview</h2>
-              <p>Drag and drop any file or click to browse. Our intelligent system will automatically detect and preview your content.</p>
+              <h2>Discover Amazing Recipes</h2>
+              <p>Explore thousands of delicious recipes from around the world, shared by our passionate community of food lovers.</p>
             </div>
 
             <div className="upload-container">
-              {showSuccess && (
-                <div className="message success">
-                  ✅ File uploaded successfully!
-                </div>
-              )}
-              {showError && (
-                <div className="message error">
-                  ❌ {errorMessage}
-                </div>
-              )}
-
-              <div 
-                className={`upload-zone ${isDragging ? 'dragover' : ''}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <div className="upload-icon">📁</div>
-                <div className="upload-text">Drop your files here</div>
-                <div className="upload-subtext">Supports all file types • Max size: 50MB</div>
+              <div className="upload-zone">
+                <div className="upload-icon">🍽️</div>
+                <div className="upload-text">Browse Recipes</div>
+                <div className="upload-subtext">Discover new dishes, cooking tips, and culinary inspiration</div>
                 <button className="upload-btn">
-                  Choose Files
+                  Explore Now
                 </button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef}
-                  className="file-input" 
-                  accept="*/*" 
-                  onChange={handleFileSelect}
-                />
               </div>
-
-              {uploadProgress > 0 && (
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              )}
-
-              {currentFile && (
-                <div className="file-preview">
-                  <div className="file-header">
-                    <div className="file-icon">{getFileIcon(currentFile)}</div>
-                    <div className="file-details">
-                      <h3>{currentFile.name}</h3>
-                      <p>{formatFileSize(currentFile.size)} • {currentFile.type || 'Unknown type'}</p>
-                    </div>
-                    <div className="file-actions">
-                      <button className="action-btn" onClick={downloadFile}>Download</button>
-                      <button className="action-btn" onClick={clearFile}>Clear</button>
-                    </div>
-                  </div>
-                  <div className="file-content">
-                    {renderFilePreview()}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -912,40 +848,40 @@ export default function Home() {
         <section className="features" id="features">
           <div className="container">
             <div className="section-header">
-              <h2>Powerful Features</h2>
-              <p>Everything you need for professional file management in one comprehensive platform.</p>
+              <h2>Why Choose RecipeHub?</h2>
+              <p>Join thousands of food lovers sharing their passion for cooking and discovering amazing recipes.</p>
             </div>
 
             <div className="features-grid">
               <div className="feature-card">
-                <div className="feature-icon">⚡</div>
-                <h3>Lightning Fast Processing</h3>
-                <p>Advanced algorithms ensure instant file processing and preview generation, even for large files up to 50MB.</p>
+                <div className="feature-icon">👨‍🍳</div>
+                <h3>Share Your Expertise</h3>
+                <p>Whether you're a seasoned chef or a home cook, share your unique recipes and cooking techniques with our community.</p>
               </div>
               <div className="feature-card">
-                <div className="feature-icon">🔒</div>
-                <h3>Enterprise Security</h3>
-                <p>All files are processed locally in your browser with zero server transmission, ensuring complete data privacy and security.</p>
+                <div className="feature-icon">📸</div>
+                <h3>Beautiful Photos</h3>
+                <p>Showcase your culinary creations with high-quality photos that will make everyone's mouth water.</p>
               </div>
               <div className="feature-card">
-                <div className="feature-icon">🎯</div>
-                <h3>Universal Compatibility</h3>
-                <p>Support for images, documents, videos, audio files, code, and more with intelligent preview generation.</p>
+                <div className="feature-icon">🌍</div>
+                <h3>Global Community</h3>
+                <p>Connect with food enthusiasts from around the world and discover recipes from different cultures and traditions.</p>
               </div>
               <div className="feature-card">
-                <div className="feature-icon">📊</div>
-                <h3>Detailed Analytics</h3>
-                <p>Comprehensive file metadata analysis including size, type, dimensions, and technical specifications.</p>
+                <div className="feature-icon">⭐</div>
+                <h3>Rate & Review</h3>
+                <p>Get feedback on your recipes and help others by rating and reviewing the dishes you try.</p>
               </div>
               <div className="feature-card">
-                <div className="feature-icon">🌐</div>
-                <h3>Cross-Platform</h3>
-                <p>Works seamlessly across all devices and browsers with responsive design and progressive web app capabilities.</p>
+                <div className="feature-icon">🔍</div>
+                <h3>Easy Discovery</h3>
+                <p>Find exactly what you're looking for with our advanced search and filtering options.</p>
               </div>
               <div className="feature-card">
-                <div className="feature-icon">🚀</div>
-                <h3>Modern Interface</h3>
-                <p>Beautifully crafted user experience with smooth animations, dark theme, and intuitive interactions.</p>
+                <div className="feature-icon">📱</div>
+                <h3>Mobile Friendly</h3>
+                <p>Submit and browse recipes on any device with our responsive design and mobile-optimized interface.</p>
               </div>
             </div>
           </div>
@@ -954,7 +890,7 @@ export default function Home() {
 
       <footer>
         <div className="container">
-          <p>&copy; 2025 FileVault Pro. Professional file management platform built with cutting-edge web technologies.</p>
+          <p>&copy; 2025 RecipeHub. Connect with food lovers worldwide and share your culinary passion.</p>
         </div>
       </footer>
     </>
