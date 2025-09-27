@@ -793,7 +793,7 @@ export default function Home() {
           <div className="logo">RecipeHub</div>
           <nav className="nav">
             <a onClick={() => window.location.href = '/my-recipies'}>Browse Recipes</a>
-            <a onClick={() => window.location.href = '/my-recipies-submision'}>Submit Recipe</a>
+            <a onClick={() => window.location.href = '/my-recipies-submission'}>Submit Recipe</a>
             <a onClick={smoothScroll} href="#features">Features</a>
             <a onClick={smoothScroll} href="#about">About</a>
             <a onClick={smoothScroll} href="#contact">Contact</a>
